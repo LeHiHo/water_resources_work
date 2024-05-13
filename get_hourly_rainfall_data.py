@@ -5,9 +5,9 @@ from datetime import datetime, timedelta
 
 ####################################################
 
-directory = r'D:\RFAHD\지역빈도최신화(8,16)\rawdata'
+directory = r'D:\RFAHD\지역빈도최신화(8,16)\rawdata\16'
 start_date = datetime(2018, 1, 1)
-obscd = '41041174'
+obscd = '20184140'
 
 ####################################################
 
