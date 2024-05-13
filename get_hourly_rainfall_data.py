@@ -3,18 +3,18 @@ import requests
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-# 지정된 경로 설정
-directory = r'D:\RFAHD\연최대강우량 산정 프로그램\01_Raw'
+####################################################
 
-# 지정된 경로에서 파일 목록 가져오기
-files = os.listdir(directory)
-modified_files = [file.replace('.DAT', '') for file in files]
+directory = r'D:\RFAHD\지역빈도최신화(8,16)\rawdata'
+start_date = datetime(2018, 1, 1)
+obscd = '41041174'
 
+####################################################
 
 def query_rainfall(start_date, end_date):
     url = "http://www.wamis.go.kr:8080/wamis/openapi/wkw/rf_hrdata"
     params = {
-        'obscd': '10014150',  # 관측소 코드
+        'obscd': obscd, # 관측소 코드
         'startdt': start_date.strftime('%Y%m%d'),  # 시작 날짜
         'enddt': end_date.strftime('%Y%m%d')  # 종료 날짜
     }
@@ -39,13 +39,17 @@ def find_negative_rainfall(rainfall_data):
     negative_dates = []
     for date, hours in rainfall_data.items():
         for hour, rain in hours.items():
-            if rain > 5:
+            if rain < 0:
                 negative_dates.append(date)
                 break  # 한 날짜에 한 번만 추가
     return negative_dates
 
+def save_to_file(data, file_path):
+    with open(file_path, 'w') as file:
+        file.write(data)
+
 # 날짜 범위 설정
-start_date = datetime(2018, 1, 1)
+
 current_date = datetime.now() - timedelta(days=1)
 delta_six_months = timedelta(days=180)  # 대략 6개월
 
@@ -65,6 +69,8 @@ while start_date < current_date:
 
 
 negative_dates = find_negative_rainfall(rainfall_data)
+formatted_output = []
+
 if negative_dates:
     print("Dates with negative rainfall values:", negative_dates)
 else:
@@ -85,5 +91,13 @@ for date, hours in sorted(rainfall_data.items()):
         formatted_date = f"{year}{month} {day}"
     else:
         formatted_date = f"{year} {month} {day}"
-    hour_rainfalls = [hours[str(h).zfill(2)] for h in range(1, 25)]
-    print(f"{formatted_date: <8}" + ''.join(format_rainfall(rain) for rain in hour_rainfalls))
+
+    # hour_rainfalls = [hours[str(h).zfill(2)] for h in range(1, 25)]
+    # print(f"{formatted_date: <8}" + ''.join(format_rainfall(rain) for rain in hour_rainfalls))
+
+    hour_rainfalls = [format_rainfall(hours[str(h).zfill(2)]) for h in range(1, 25)]
+    formatted_output.append(f"{formatted_date: <8}" + ''.join(hour_rainfalls))
+
+file_path = os.path.join(directory, f'{obscd}.txt')
+save_to_file('\n'.join(formatted_output), file_path)
+print(f"Data saved to {file_path}")

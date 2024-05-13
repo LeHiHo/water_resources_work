@@ -1,9 +1,9 @@
 import pandas as pd
 
-file_name = '10011100'
+file_name = 'test.txt'
 
 # 파일 경로 설정
-file_path = f'D:/RFAHD/연최대강우량 산정 프로그램/01_Raw/{file_name}.DAT'
+file_path = f'C:/Users/wkdgh/OneDrive/바탕 화면/{file_name}'
 
 def calculate_adjustment_factor(duration):
     if duration <= 48:
@@ -46,7 +46,7 @@ for year in df['Year'].unique():
         max_durations.loc[year, f'{duration}-HR'] = adjusted_rain
 
 # CSV 파일로 저장
-output_file_path = f'D:/RFAHD/연최대강우량 산정 프로그램/02_AM/{file_name}_max_durations.csv'
+output_file_path = f'C:/Users/wkdgh/OneDrive/바탕 화면/{file_name}_max_durations.csv'
 max_durations.to_csv(output_file_path, index=True, header=True)
 
 print(f"File saved as: {output_file_path}")
