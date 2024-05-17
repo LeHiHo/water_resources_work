@@ -2,12 +2,13 @@ import os
 import requests
 from collections import defaultdict
 from datetime import datetime, timedelta
+import pandas as pd  # pandas 라이브러리 추가
 
 ####################################################
 
 directory = r'D:\RFAHD\지역빈도최신화(8,16)\rawdata\16'
-start_date = datetime(2018, 1, 1)
-obscd = '20184340'
+start_date = datetime(1950, 1, 1)
+obscd = '10071203'
 
 ####################################################
 
@@ -44,10 +45,6 @@ def find_negative_rainfall(rainfall_data):
                 break  # 한 날짜에 한 번만 추가
     return negative_dates
 
-def save_to_file(data, file_path):
-    with open(file_path, 'w') as file:
-        file.write(data)
-
 # 날짜 범위 설정
 
 current_date = datetime.now() - timedelta(days=1)
@@ -67,37 +64,26 @@ while start_date < current_date:
             rainfall_data[date][hour] = rf
     start_date = end_date + timedelta(days=1)  # 다음 기간 시작일은 이전 종료일 다음날
 
-
 negative_dates = find_negative_rainfall(rainfall_data)
-formatted_output = []
 
 if negative_dates:
     print("Dates with negative rainfall values:", negative_dates)
 else:
     print("No negative rainfall values found.")
 
-# 결과 출력
+# 결과 출력 및 CSV 파일 저장
+output_rows = []
+
 for date, hours in sorted(rainfall_data.items()):
-    year = date[:4]
-    month = date[4:6]
-    day = date[6:]
-    month = month.lstrip('0') if month.startswith('0') else month
-    day = day.lstrip('0') if day.startswith('0') else day
-    if len(month) == 2 and len(day) == 2:
-        formatted_date = f"{year}{month}{day}"
-    elif len(month) == 1 and len(day) == 2:
-        formatted_date = f"{year} {month}{day}"
-    elif len(month) == 2 and len(day ) == 1:
-        formatted_date = f"{year}{month} {day}"
-    else:
-        formatted_date = f"{year} {month} {day}"
-
-    # hour_rainfalls = [hours[str(h).zfill(2)] for h in range(1, 25)]
-    # print(f"{formatted_date: <8}" + ''.join(format_rainfall(rain) for rain in hour_rainfalls))
-
     hour_rainfalls = [format_rainfall(hours[str(h).zfill(2)]) for h in range(1, 25)]
-    formatted_output.append(f"{formatted_date: <8}" + ''.join(hour_rainfalls))
+    output_rows.append([date] + hour_rainfalls)
 
-file_path = os.path.join(directory, f'{obscd}.txt')
-save_to_file('\n'.join(formatted_output), file_path)
-print(f"Data saved to {file_path}")
+# DataFrame 생성
+columns = ['Date'] + [f'{h}-HR' for h in range(1, 25)]
+df = pd.DataFrame(output_rows, columns=columns)
+
+# CSV 파일로 저장
+output_file_path = os.path.join(directory, 'rainfall_data.csv')
+df.to_csv(output_file_path, index=False)
+
+print(f"Data saved to {output_file_path}")

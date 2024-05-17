@@ -1,29 +1,25 @@
 import os
 import pandas as pd
 
-######################################################################
-
+# 디렉토리 경로
 directory = 'D:/RFAHD/지역빈도최신화(8,16)/rawdata/16/'
-
-######################################################################
 
 def calculate_adjustment_factor(duration):
     if duration <= 48:
         return 0.1346 * (duration ** -1.4170) + 1.0014
     else:
-        return 1  # 48시간을 초과하는 경우 환산계수를 적용하지 않고 1을 반환
+        return 1
 
-
-# 연도별 최대 지속 강우량 계산 함수
 def process_file(file_path):
     file_name = os.path.splitext(os.path.basename(file_path))[0]
     output_file_path = os.path.join(directory, f'{file_name}.csv')
 
+    # 데이터를 읽고 처리
     columns = ['Year', 'Month', 'Day'] + [f'Hour_{i + 1}' for i in range(24)]
     data_list = []
     with open(file_path, 'r') as file:
         for line in file:
-            date_part, rain_part = line[:9], line[10:]
+            date_part, rain_part = line.strip()[:9], line.strip()[9:]
             year = int(date_part[:4])
             month = int(date_part[4:6])
             day = int(date_part[6:])
@@ -35,7 +31,6 @@ def process_file(file_path):
     extended_year_series = pd.Series(df['Year'].repeat(24).values)
 
     max_durations = pd.DataFrame(index=df['Year'].unique(), columns=[f'{i}-HR' for i in range(1, 73)])
-
     for year in df['Year'].unique():
         year_data = rain_series[extended_year_series == year]
         for duration in range(1, 73):
@@ -46,8 +41,8 @@ def process_file(file_path):
             max_durations.loc[year, f'{duration}-HR'] = adjusted_rain
 
     max_durations.to_csv(output_file_path, index=True, header=True)
-    print(f"File saved as: {output_file_path}")
 
+    print(max_durations.to_string())
 
 # 디렉토리 내의 모든 .txt 파일을 처리
 for file in os.listdir(directory):
